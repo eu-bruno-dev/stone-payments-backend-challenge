@@ -93,5 +93,9 @@ export class Transaction extends BaseEntity<TransactionProps> {
     ) {
       throw new Error('Missing required fields in payload');
     }
+
+    if (!Object.values(CURRENCY_OPTIONS).includes(props.currency)) {
+      throw new Error('Invalid currency');
+    }
   }
 }

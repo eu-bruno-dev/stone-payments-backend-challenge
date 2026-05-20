@@ -10,9 +10,19 @@ export class Timestamp extends ValueObject<TimestampProps> {
   }
 
   private static validateTimestamp(timestamp: Date) {
+    const rfc3339Regex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?$/;
+
     if (!timestamp) {
       // Refatorar para erro específico
       throw new Error(TransactionErrorMessages.PAYLOAD_ERROR);
+    }
+
+    if (typeof timestamp === 'string' && !rfc3339Regex.test(timestamp)) {
+      throw new Error(TransactionErrorMessages.TIMESTAMP_NOT_VALID);
+    }
+
+    if (timestamp.getTime() > Date.now()) {
+      throw new Error(TransactionErrorMessages.TIMESTAMP_ON_FUTURE);
     }
 
     if (isNaN(timestamp.getTime())) {

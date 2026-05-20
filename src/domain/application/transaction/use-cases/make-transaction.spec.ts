@@ -1,6 +1,7 @@
 import { InMemoryTransactionsRepository } from 'test/repositories/in-memory-transactions.repository';
-import { MakeTransactionUseCase } from './make-transaction';
+import { MakeTransactionUseCase } from './make-transaction-use-case';
 import { makeTransaction } from 'test/factories/make-transaction';
+import { TransactionErrorMessages } from '@/core/consts/transaction';
 
 let transactionsRepository: InMemoryTransactionsRepository;
 
@@ -68,6 +69,34 @@ suite('[MakeTransaction][UseCase]', () => {
           timestamp: transaction.timestamp,
         }),
       ).rejects.toThrow('Amount must be greater than zero');
+    });
+
+    it('should no be able to create a transaction with timestamp in the future', async () => {
+      const transaction = makeTransaction({});
+      await expect(
+        sut.execute({
+          id: transaction.id,
+          amount: transaction.amount,
+          card_number: transaction.card_number.value,
+          currency: transaction.currency,
+          merchant: transaction.merchant,
+          timestamp: new Date('invalid-date'),
+        }),
+      ).rejects.toThrow(TransactionErrorMessages.TIMESTAMP_NOT_VALID);
+    });
+
+    it('should no be able to create a transaction with timestamp in the future', async () => {
+      const transaction = makeTransaction({});
+      await expect(
+        sut.execute({
+          id: transaction.id,
+          amount: transaction.amount,
+          card_number: transaction.card_number.value,
+          currency: transaction.currency,
+          merchant: transaction.merchant,
+          timestamp: new Date(Date.now() + 1000 * 60 * 60),
+        }),
+      ).rejects.toThrow(TransactionErrorMessages.TIMESTAMP_ON_FUTURE);
     });
   });
 });

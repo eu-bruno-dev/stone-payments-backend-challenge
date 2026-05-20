@@ -4,6 +4,7 @@ import { TransactionsRepository } from '../repositories/transactions.repository'
 import { Timestamp } from '@/domain/enterprise/entities/value-objects/timestamp';
 import { ID } from '@/core/entities/id';
 import { CreditCard } from '@/domain/enterprise/entities/value-objects/credit-card';
+import { TransactionErrorMessages } from '@/core/consts/transaction';
 
 interface MakeTransactionUseCaseRequest {
   id?: ID;
@@ -64,6 +65,10 @@ export class MakeTransactionUseCase {
     }
     if (!card_number || !currency || !merchant || !timestamp) {
       throw new Error('Missing required fields in payload');
+    }
+
+    if (payload.timestamp.getTime() > Date.now()) {
+      throw new Error(TransactionErrorMessages.TIMESTAMP_ON_FUTURE);
     }
   }
 }
