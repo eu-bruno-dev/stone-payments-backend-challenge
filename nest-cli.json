@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json.schemastore.org/nest-cli",
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "src",
+  "entryFile": "infra/main",
+  "compilerOptions": {
+    "builder": {
+      "type": "swc",
+      "options": {}
+    },
+    "typeCheck": false,
+    "deleteOutDir": true,
+    "plugins": [
+      {
+        "name": "@nestjs/swagger/plugin",
+        "options": {
+          "introspectComments": true,
+          "dtoFileNameSuffix": [
+            ".dto.ts",
+            ".entity.ts"
+          ]
+        }
+      }
+    ]
+  }
+}
