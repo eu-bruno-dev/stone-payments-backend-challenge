@@ -5,6 +5,8 @@ import { Timestamp } from '@/domain/enterprise/entities/value-objects/timestamp'
 import { ID } from '@/core/entities/id';
 import { CreditCard } from '@/domain/enterprise/entities/value-objects/credit-card';
 import { TransactionErrorMessages } from '@/core/consts/transaction';
+import { Authorizer } from '../../shared/gateways/authorizer.gateway';
+import { PAYMENT_STATUS } from '@/core/consts/payment-status';
 
 interface MakeTransactionUseCaseRequest {
   id?: ID;
@@ -16,9 +18,13 @@ interface MakeTransactionUseCaseRequest {
 }
 
 type MakeTransactionUseCaseResponse = { transaction: Transaction };
+// type MakeTransactionUseCaseResponse = { status: PAYMENT_STATUS; authorize_id: string };
 
 export class MakeTransactionUseCase {
-  constructor(private readonly transactionsRepository: TransactionsRepository) {}
+  constructor(
+    private readonly transactionsRepository: TransactionsRepository,
+    private readonly authorizer: Authorizer,
+  ) {}
 
   async execute({
     id,
@@ -47,6 +53,15 @@ export class MakeTransactionUseCase {
       },
       id,
     );
+
+    const authorize_transaction = await this.authorizer.authorize(transaction);
+
+    if (!authorize_transaction) {
+      throw new Error('rejected');
+    }
+    // Set the authorizer_id
+    transaction.authorizeId = authorize_transaction.authorize_id;
+    transaction.changeStatus(PAYMENT_STATUS.APPROVED);
 
     const newTransaction = await this.transactionsRepository.makeTransaction(transaction);
 

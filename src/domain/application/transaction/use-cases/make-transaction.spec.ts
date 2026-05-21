@@ -2,9 +2,11 @@ import { InMemoryTransactionsRepository } from 'test/repositories/in-memory-tran
 import { MakeTransactionUseCase } from './make-transaction-use-case';
 import { makeTransaction } from 'test/factories/make-transaction';
 import { TransactionErrorMessages } from '@/core/consts/transaction';
+import { FakeAuthorizer } from 'test/gateways/authorizer/fake-authorizer';
+import { PAYMENT_STATUS } from '@/core/consts/payment-status';
 
 let transactionsRepository: InMemoryTransactionsRepository;
-
+let authorizer: FakeAuthorizer;
 /**
  * System Under Test (SUT)
  */
@@ -13,8 +15,9 @@ let sut: MakeTransactionUseCase;
 suite('[MakeTransaction][UseCase]', () => {
   beforeEach(() => {
     transactionsRepository = new InMemoryTransactionsRepository();
+    authorizer = new FakeAuthorizer();
 
-    sut = new MakeTransactionUseCase(transactionsRepository);
+    sut = new MakeTransactionUseCase(transactionsRepository, authorizer);
   });
 
   describe('Transfer money', () => {
@@ -22,6 +25,8 @@ suite('[MakeTransaction][UseCase]', () => {
       const transaction = makeTransaction({
         merchant: 'Amazon',
       });
+
+      expect(transaction.status).toEqual(PAYMENT_STATUS.PENDING);
 
       const result = await sut.execute({
         id: transaction.id,
@@ -33,13 +38,14 @@ suite('[MakeTransaction][UseCase]', () => {
       });
 
       const transactionID = transaction.id.toString();
-      // console.log(result.transaction);
+      console.log(result.transaction);
 
       expect(result.transaction).toBeDefined();
       expect(transactionsRepository.items).toHaveLength(1);
       expect(result.transaction.id.toString()).toBe(transaction.id.toString());
-
+      expect(result.transaction.authorize_id).toBeDefined();
       expect(transactionsRepository.items.get(transactionID)?.amount).toBe(transaction.amount);
+      expect(result.transaction.status).toEqual(PAYMENT_STATUS.APPROVED);
     });
 
     it('should not be able to create a transaction with invalid card number format', async () => {
