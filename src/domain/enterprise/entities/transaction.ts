@@ -39,11 +39,6 @@ export class Transaction extends BaseEntity<TransactionProps> {
     return this.props.authorize_id;
   }
 
-  set authorizeId(authorizeId: string) {
-    this.props.authorize_id = authorizeId;
-    this.props.updatedAt = new Date();
-  }
-
   get status() {
     return this.props.status;
   }
@@ -58,6 +53,11 @@ export class Transaction extends BaseEntity<TransactionProps> {
 
   get updated_at() {
     return this.props.updatedAt;
+  }
+
+  public setAuthorizeId(authorizeId: string) {
+    this.props.authorize_id = authorizeId;
+    this.props.updatedAt = new Date();
   }
 
   public changeStatus(status: PAYMENT_STATUS): void {

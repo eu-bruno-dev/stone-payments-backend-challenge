@@ -20,13 +20,14 @@ suite('[MakeTransaction][UseCase]', () => {
     sut = new MakeTransactionUseCase(transactionsRepository, authorizer);
   });
 
-  describe('Transfer money', () => {
-    it('should be able make a transaction', async () => {
+  describe('Transaction', () => {
+    it('should be able to make a transaction', async () => {
       const transaction = makeTransaction({
         merchant: 'Amazon',
       });
 
       expect(transaction.status).toEqual(PAYMENT_STATUS.PENDING);
+      expect(transaction.updated_at).not.toBeDefined();
 
       const result = await sut.execute({
         id: transaction.id,
@@ -46,6 +47,7 @@ suite('[MakeTransaction][UseCase]', () => {
       expect(result.transaction.authorize_id).toBeDefined();
       expect(transactionsRepository.items.get(transactionID)?.amount).toBe(transaction.amount);
       expect(result.transaction.status).toEqual(PAYMENT_STATUS.APPROVED);
+      expect(result.transaction.updated_at).toBeDefined();
     });
 
     it('should not be able to create a transaction with invalid card number format', async () => {

@@ -60,7 +60,7 @@ export class MakeTransactionUseCase {
       throw new Error('rejected');
     }
     // Set the authorizer_id
-    transaction.authorizeId = authorize_transaction.authorize_id;
+    transaction.setAuthorizeId(authorize_transaction.authorize_id);
     transaction.changeStatus(PAYMENT_STATUS.APPROVED);
 
     const newTransaction = await this.transactionsRepository.makeTransaction(transaction);
