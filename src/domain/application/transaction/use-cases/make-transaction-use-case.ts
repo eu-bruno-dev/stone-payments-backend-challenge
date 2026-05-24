@@ -4,9 +4,11 @@ import { TransactionsRepository } from '../repositories/transactions.repository'
 import { Timestamp } from '@/domain/enterprise/entities/value-objects/timestamp';
 import { ID } from '@/core/entities/id';
 import { CreditCard } from '@/domain/enterprise/entities/value-objects/credit-card';
-import { TransactionErrorMessages } from '@/core/consts/transaction';
+import { TRANSACTION_ERROR_MESSAGES } from '@/core/consts/transaction';
 import { Authorizer } from '../../shared/gateways/authorizer.gateway';
 import { PAYMENT_STATUS } from '@/core/consts/payment-status';
+import { WARNING_MESSAGES } from '@/core/consts/warning';
+import { SuspiciousRepository } from '../repositories/suspicious.repository';
 
 interface MakeTransactionUseCaseRequest {
   id?: ID;
@@ -23,6 +25,7 @@ type MakeTransactionUseCaseResponse = { transaction: Transaction };
 export class MakeTransactionUseCase {
   constructor(
     private readonly transactionsRepository: TransactionsRepository,
+    private readonly suspiciousRepository: SuspiciousRepository,
     private readonly authorizer: Authorizer,
   ) {}
 
@@ -43,6 +46,9 @@ export class MakeTransactionUseCase {
       timestamp,
     });
 
+    // Validate if transaction is more than 5 in one minute time
+    await this.checkTransactionPattern(card_number);
+
     const transaction = Transaction.create(
       {
         card_number: CreditCard.createCreditCard(card_number),
@@ -61,7 +67,14 @@ export class MakeTransactionUseCase {
     }
     // Set the authorizer_id
     transaction.setAuthorizeId(authorize_transaction.authorize_id);
-    transaction.changeStatus(PAYMENT_STATUS.APPROVED);
+
+    if (transaction.status === PAYMENT_STATUS.HIGH_AMOUNT) {
+      transaction.changeStatus(PAYMENT_STATUS.APPROVED_WITH_WARNING);
+      transaction.setWarningText(WARNING_MESSAGES.HIGH_AMOUNT);
+      await this.suspiciousRepository.register(transaction);
+    } else {
+      transaction.changeStatus(PAYMENT_STATUS.APPROVED);
+    }
 
     const newTransaction = await this.transactionsRepository.makeTransaction(transaction);
 
@@ -83,7 +96,13 @@ export class MakeTransactionUseCase {
     }
 
     if (payload.timestamp.getTime() > Date.now()) {
-      throw new Error(TransactionErrorMessages.TIMESTAMP_ON_FUTURE);
+      throw new Error(TRANSACTION_ERROR_MESSAGES.TIMESTAMP_ON_FUTURE);
     }
+  }
+
+  // TODO: FUCK
+  // eslint-disable-next-line @typescript-eslint/require-await
+  private async checkTransactionPattern(card_number: string) {
+    return;
   }
 }

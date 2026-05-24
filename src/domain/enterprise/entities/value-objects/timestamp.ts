@@ -1,4 +1,4 @@
-import { TransactionErrorMessages } from '@/core/consts/transaction';
+import { TRANSACTION_ERROR_MESSAGES } from '@/core/consts/transaction';
 import { ValueObject } from '@/core/entities/value-object';
 
 export interface TimestampProps {
@@ -14,24 +14,24 @@ export class Timestamp extends ValueObject<TimestampProps> {
 
     if (!timestamp) {
       // Refatorar para erro específico
-      throw new Error(TransactionErrorMessages.PAYLOAD_ERROR);
+      throw new Error(TRANSACTION_ERROR_MESSAGES.PAYLOAD_ERROR);
     }
 
     if (typeof timestamp === 'string' && !rfc3339Regex.test(timestamp)) {
-      throw new Error(TransactionErrorMessages.TIMESTAMP_NOT_VALID);
+      throw new Error(TRANSACTION_ERROR_MESSAGES.TIMESTAMP_NOT_VALID);
     }
 
     if (timestamp.getTime() > Date.now()) {
-      throw new Error(TransactionErrorMessages.TIMESTAMP_ON_FUTURE);
+      throw new Error(TRANSACTION_ERROR_MESSAGES.TIMESTAMP_ON_FUTURE);
     }
 
     if (isNaN(timestamp.getTime())) {
-      throw new Error(TransactionErrorMessages.TIMESTAMP_NOT_VALID);
+      throw new Error(TRANSACTION_ERROR_MESSAGES.TIMESTAMP_NOT_VALID);
     }
 
     const now = new Date();
     if (timestamp > now) {
-      throw new Error(TransactionErrorMessages.TIMESTAMP_ON_FUTURE);
+      throw new Error(TRANSACTION_ERROR_MESSAGES.TIMESTAMP_ON_FUTURE);
     }
   }
 

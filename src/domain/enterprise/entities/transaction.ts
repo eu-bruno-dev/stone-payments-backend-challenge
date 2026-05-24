@@ -12,6 +12,7 @@ export interface TransactionProps {
   currency: CURRENCY_OPTIONS;
   merchant: string;
   status: PAYMENT_STATUS;
+  warning?: string;
   authorize_id?: string;
   timestamp: Timestamp;
   createdAt: Date;
@@ -43,6 +44,10 @@ export class Transaction extends BaseEntity<TransactionProps> {
     return this.props.status;
   }
 
+  get warning() {
+    return this.props.warning;
+  }
+
   get timestamp() {
     return this.props.timestamp.value;
   }
@@ -65,6 +70,11 @@ export class Transaction extends BaseEntity<TransactionProps> {
     this.props.updatedAt = new Date();
   }
 
+  public setWarningText(text: string) {
+    this.props.warning = text;
+    this.props.updatedAt = new Date();
+  }
+
   static create(props: Optional<TransactionProps, 'status' | 'createdAt'>, id?: ID) {
     // Validate input data
     this.validate(props);
@@ -82,6 +92,10 @@ export class Transaction extends BaseEntity<TransactionProps> {
   private static validate(props: Optional<TransactionProps, 'status' | 'createdAt'>) {
     if (props.amount <= 0) {
       throw new Error('Amount must be greater than zero');
+    }
+
+    if (props.amount > 10_000) {
+      props.status = PAYMENT_STATUS.HIGH_AMOUNT;
     }
 
     if (

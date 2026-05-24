@@ -1,11 +1,14 @@
 import { InMemoryTransactionsRepository } from 'test/repositories/in-memory-transactions.repository';
 import { MakeTransactionUseCase } from './make-transaction-use-case';
 import { makeTransaction } from 'test/factories/make-transaction';
-import { TransactionErrorMessages } from '@/core/consts/transaction';
 import { FakeAuthorizer } from 'test/gateways/authorizer/fake-authorizer';
 import { PAYMENT_STATUS } from '@/core/consts/payment-status';
+import { TRANSACTION_ERROR_MESSAGES } from '@/core/consts/transaction';
+import { WARNING_MESSAGES } from '@/core/consts/warning';
+import { InMemorySuspiciousRepository } from 'test/repositories/in-memory-suspicious.repository';
 
 let transactionsRepository: InMemoryTransactionsRepository;
+let suspiciousRepository: InMemorySuspiciousRepository;
 let authorizer: FakeAuthorizer;
 /**
  * System Under Test (SUT)
@@ -15,9 +18,10 @@ let sut: MakeTransactionUseCase;
 suite('[MakeTransaction][UseCase]', () => {
   beforeEach(() => {
     transactionsRepository = new InMemoryTransactionsRepository();
+    suspiciousRepository = new InMemorySuspiciousRepository();
     authorizer = new FakeAuthorizer();
 
-    sut = new MakeTransactionUseCase(transactionsRepository, authorizer);
+    sut = new MakeTransactionUseCase(transactionsRepository, suspiciousRepository, authorizer);
   });
 
   describe('Transaction', () => {
@@ -48,6 +52,39 @@ suite('[MakeTransaction][UseCase]', () => {
       expect(transactionsRepository.items.get(transactionID)?.amount).toBe(transaction.amount);
       expect(result.transaction.status).toEqual(PAYMENT_STATUS.APPROVED);
       expect(result.transaction.updated_at).toBeDefined();
+      expect(suspiciousRepository.items).toHaveLength(0);
+    });
+
+    it('should be able to make a transaction that is considered suspicious', async () => {
+      const transaction = makeTransaction({
+        amount: 10_001,
+        merchant: 'Amazon',
+      });
+
+      expect(transaction.status).toEqual(PAYMENT_STATUS.HIGH_AMOUNT);
+      expect(transaction.updated_at).not.toBeDefined();
+
+      const result = await sut.execute({
+        id: transaction.id,
+        amount: transaction.amount,
+        card_number: transaction.card_number.value,
+        currency: transaction.currency,
+        merchant: transaction.merchant,
+        timestamp: transaction.timestamp,
+      });
+
+      const transactionID = transaction.id.toString();
+      console.log(suspiciousRepository.items);
+
+      expect(result.transaction).toBeDefined();
+      expect(transactionsRepository.items).toHaveLength(1);
+      expect(result.transaction.id.toString()).toBe(transaction.id.toString());
+      expect(result.transaction.authorize_id).toBeDefined();
+      expect(transactionsRepository.items.get(transactionID)?.amount).toBe(transaction.amount);
+      expect(result.transaction.status).toEqual(PAYMENT_STATUS.APPROVED_WITH_WARNING);
+      expect(result.transaction.warning).toEqual(WARNING_MESSAGES.HIGH_AMOUNT);
+      expect(result.transaction.updated_at).toBeDefined();
+      expect(suspiciousRepository.items).toHaveLength(1);
     });
 
     it('should not be able to create a transaction with invalid card number format', async () => {
@@ -90,7 +127,7 @@ suite('[MakeTransaction][UseCase]', () => {
           merchant: transaction.merchant,
           timestamp: new Date('invalid-date'),
         }),
-      ).rejects.toThrow(TransactionErrorMessages.TIMESTAMP_NOT_VALID);
+      ).rejects.toThrow(TRANSACTION_ERROR_MESSAGES.TIMESTAMP_NOT_VALID);
     });
 
     it('should no be able to create a transaction with timestamp in the future', async () => {
@@ -104,7 +141,7 @@ suite('[MakeTransaction][UseCase]', () => {
           merchant: transaction.merchant,
           timestamp: new Date(Date.now() + 1000 * 60 * 60),
         }),
-      ).rejects.toThrow(TransactionErrorMessages.TIMESTAMP_ON_FUTURE);
+      ).rejects.toThrow(TRANSACTION_ERROR_MESSAGES.TIMESTAMP_ON_FUTURE);
     });
   });
 });

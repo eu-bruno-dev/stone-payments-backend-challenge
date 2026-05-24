@@ -1,4 +1,4 @@
-import { TransactionErrorMessages } from '@/core/consts/transaction';
+import { TRANSACTION_ERROR_MESSAGES } from '@/core/consts/transaction';
 import { ValueObject } from '@/core/entities/value-object';
 
 export interface CreditCardProps {
@@ -12,7 +12,7 @@ export class CreditCard extends ValueObject<CreditCardProps> {
   private static validateCreditCard(card_number: string) {
     if (!card_number) {
       // Refatorar para erro específico
-      throw new Error(TransactionErrorMessages.PAYLOAD_ERROR);
+      throw new Error(TRANSACTION_ERROR_MESSAGES.PAYLOAD_ERROR);
     }
 
     if (card_number.toString().length < 13 || card_number.toString().length > 19) {
