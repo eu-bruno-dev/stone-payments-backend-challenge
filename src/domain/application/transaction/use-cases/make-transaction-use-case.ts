@@ -8,7 +8,6 @@ import { TRANSACTION_ERROR_MESSAGES } from '@/core/consts/transaction';
 import { Authorizer } from '../../shared/gateways/authorizer.gateway';
 import { PAYMENT_STATUS } from '@/core/consts/payment-status';
 import { WARNING_MESSAGES } from '@/core/consts/warning';
-import { SuspiciousRepository } from '../repositories/suspicious.repository';
 
 interface MakeTransactionUseCaseRequest {
   id?: ID;
@@ -25,7 +24,6 @@ type MakeTransactionUseCaseResponse = { transaction: Transaction };
 export class MakeTransactionUseCase {
   constructor(
     private readonly transactionsRepository: TransactionsRepository,
-    private readonly suspiciousRepository: SuspiciousRepository,
     private readonly authorizer: Authorizer,
   ) {}
 
@@ -71,7 +69,6 @@ export class MakeTransactionUseCase {
     if (transaction.status === PAYMENT_STATUS.HIGH_AMOUNT) {
       transaction.changeStatus(PAYMENT_STATUS.APPROVED_WITH_WARNING);
       transaction.setWarningText(WARNING_MESSAGES.HIGH_AMOUNT);
-      await this.suspiciousRepository.register(transaction);
     } else {
       transaction.changeStatus(PAYMENT_STATUS.APPROVED);
     }

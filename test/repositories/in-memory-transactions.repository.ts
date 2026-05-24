@@ -10,4 +10,12 @@ export class InMemoryTransactionsRepository implements TransactionsRepository {
 
     return transaction;
   }
+
+  async findLast50SuspiciousByCardNumber(card_number: string): Promise<Transaction[]> {
+    const transactions = Array.from(this.items.values()).filter(
+      (transaction) => transaction.card_number.value === card_number,
+    );
+
+    return transactions.slice(0, 50);
+  }
 }

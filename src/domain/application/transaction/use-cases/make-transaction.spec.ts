@@ -5,10 +5,8 @@ import { FakeAuthorizer } from 'test/gateways/authorizer/fake-authorizer';
 import { PAYMENT_STATUS } from '@/core/consts/payment-status';
 import { TRANSACTION_ERROR_MESSAGES } from '@/core/consts/transaction';
 import { WARNING_MESSAGES } from '@/core/consts/warning';
-import { InMemorySuspiciousRepository } from 'test/repositories/in-memory-suspicious.repository';
 
 let transactionsRepository: InMemoryTransactionsRepository;
-let suspiciousRepository: InMemorySuspiciousRepository;
 let authorizer: FakeAuthorizer;
 /**
  * System Under Test (SUT)
@@ -18,10 +16,9 @@ let sut: MakeTransactionUseCase;
 suite('[MakeTransaction][UseCase]', () => {
   beforeEach(() => {
     transactionsRepository = new InMemoryTransactionsRepository();
-    suspiciousRepository = new InMemorySuspiciousRepository();
     authorizer = new FakeAuthorizer();
 
-    sut = new MakeTransactionUseCase(transactionsRepository, suspiciousRepository, authorizer);
+    sut = new MakeTransactionUseCase(transactionsRepository, authorizer);
   });
 
   describe('Transaction', () => {
@@ -52,7 +49,6 @@ suite('[MakeTransaction][UseCase]', () => {
       expect(transactionsRepository.items.get(transactionID)?.amount).toBe(transaction.amount);
       expect(result.transaction.status).toEqual(PAYMENT_STATUS.APPROVED);
       expect(result.transaction.updated_at).toBeDefined();
-      expect(suspiciousRepository.items).toHaveLength(0);
     });
 
     it('should be able to make a transaction that is considered suspicious', async () => {
@@ -74,7 +70,7 @@ suite('[MakeTransaction][UseCase]', () => {
       });
 
       const transactionID = transaction.id.toString();
-      console.log(suspiciousRepository.items);
+      console.log(result.transaction);
 
       expect(result.transaction).toBeDefined();
       expect(transactionsRepository.items).toHaveLength(1);
@@ -84,7 +80,6 @@ suite('[MakeTransaction][UseCase]', () => {
       expect(result.transaction.status).toEqual(PAYMENT_STATUS.APPROVED_WITH_WARNING);
       expect(result.transaction.warning).toEqual(WARNING_MESSAGES.HIGH_AMOUNT);
       expect(result.transaction.updated_at).toBeDefined();
-      expect(suspiciousRepository.items).toHaveLength(1);
     });
 
     it('should not be able to create a transaction with invalid card number format', async () => {
