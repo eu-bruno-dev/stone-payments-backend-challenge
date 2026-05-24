@@ -5,9 +5,7 @@ import { TRANSACTION_ERROR_MESSAGES } from '@/core/consts/transaction';
 import { PAYMENT_STATUS } from '@/core/consts/payment-status';
 
 suite('[Transaction]', () => {
-  beforeEach(() => {
-    // sut = new MakeTransactionUseCase(transactionsRepository);
-  });
+  beforeEach(() => {});
 
   describe('Create transaction', () => {
     it('should be able to create a valid transaction instance', () => {
