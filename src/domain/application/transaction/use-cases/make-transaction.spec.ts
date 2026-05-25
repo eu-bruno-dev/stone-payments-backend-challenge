@@ -5,6 +5,7 @@ import { FakeAuthorizer } from 'test/gateways/authorizer/fake-authorizer';
 import { PAYMENT_STATUS } from '@/core/consts/payment-status';
 import { TRANSACTION_ERROR_MESSAGES } from '@/core/consts/transaction';
 import { WARNING_MESSAGES } from '@/core/consts/warning';
+import { Transaction } from '@/domain/enterprise/entities/transaction';
 
 let transactionsRepository: InMemoryTransactionsRepository;
 let authorizer: FakeAuthorizer;
@@ -80,6 +81,50 @@ suite('[MakeTransaction][UseCase]', () => {
       expect(result.transaction.status).toEqual(PAYMENT_STATUS.APPROVED_WITH_WARNING);
       expect(result.transaction.warning).toEqual(WARNING_MESSAGES.HIGH_AMOUNT);
       expect(result.transaction.updated_at).toBeDefined();
+    });
+
+    it('should be able to create transactions that is marked as suspicious', async () => {
+      const card_number = '4111111111111111';
+
+      const transactions: Transaction[] = [];
+      for (let i = 0; i < 5; i++) {
+        transactions.push(
+          makeTransaction({
+            card_number,
+          }),
+        );
+      }
+
+      for (const t of transactions) {
+        const result = await sut.execute({
+          id: t.id,
+          amount: t.amount,
+          card_number: t.card_number.value,
+          currency: t.currency,
+          merchant: t.merchant,
+          timestamp: t.timestamp,
+        });
+        expect(result.transaction.status).toEqual(PAYMENT_STATUS.APPROVED);
+      }
+      expect(transactionsRepository.items).toHaveLength(5);
+
+      const suspiciousTransaction = makeTransaction({
+        card_number,
+      });
+
+      const result = await sut.execute({
+        id: suspiciousTransaction.id,
+        amount: suspiciousTransaction.amount,
+        card_number: suspiciousTransaction.card_number.value,
+        currency: suspiciousTransaction.currency,
+        merchant: suspiciousTransaction.merchant,
+        timestamp: suspiciousTransaction.timestamp,
+      });
+
+      // console.log(result.transaction);
+      expect(result.transaction.status).toEqual(PAYMENT_STATUS.APPROVED_WITH_WARNING);
+      expect(result.transaction.warning).toEqual(WARNING_MESSAGES.SUSPICIOUS_CARD);
+      expect(transactionsRepository.blacklistedCards.has(card_number)).toBe(true);
     });
 
     it('should not be able to create a transaction with invalid card number format', async () => {

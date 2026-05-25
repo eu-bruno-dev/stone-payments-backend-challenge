@@ -44,9 +44,6 @@ export class MakeTransactionUseCase {
       timestamp,
     });
 
-    // Validate if transaction is more than 5 in one minute time
-    await this.checkTransactionPattern(card_number);
-
     const transaction = Transaction.create(
       {
         card_number: CreditCard.createCreditCard(card_number),
@@ -66,7 +63,14 @@ export class MakeTransactionUseCase {
     // Set the authorizer_id
     transaction.setAuthorizeId(authorize_transaction.authorize_id);
 
-    if (transaction.status === PAYMENT_STATUS.HIGH_AMOUNT) {
+    // Validate if transaction is more than 5 in one minute time
+    await this.checkTransactionPattern(card_number);
+
+    const isBlacklisted = await this.transactionsRepository.isCardBlacklisted(card_number);
+    if (isBlacklisted) {
+      transaction.changeStatus(PAYMENT_STATUS.APPROVED_WITH_WARNING);
+      transaction.setWarningText(WARNING_MESSAGES.SUSPICIOUS_CARD);
+    } else if (transaction.status === PAYMENT_STATUS.HIGH_AMOUNT) {
       transaction.changeStatus(PAYMENT_STATUS.APPROVED_WITH_WARNING);
       transaction.setWarningText(WARNING_MESSAGES.HIGH_AMOUNT);
     } else {
@@ -97,9 +101,29 @@ export class MakeTransactionUseCase {
     }
   }
 
-  // TODO: FUCK
-  // eslint-disable-next-line @typescript-eslint/require-await
   private async checkTransactionPattern(card_number: string) {
-    return;
+    const last50Transactions =
+      await this.transactionsRepository.findLast50SuspiciousByCardNumber(card_number);
+
+    if (last50Transactions.length === 0) {
+      return;
+    }
+
+    // Pega o timestamp da transação mais recente
+    const mostRecentTimestamp = Math.max(...last50Transactions.map((t) => t.timestamp.getTime()));
+    const oneMinuteAgo = mostRecentTimestamp - 60 * 1000; // 1 minuto em ms
+
+    // Conta quantas transações ocorreram nos últimos 60 segundos
+    const transactionsInLastMinute = last50Transactions.filter(
+      (transaction) => transaction.timestamp.getTime() > oneMinuteAgo,
+    ).length;
+
+    // console.log(last50Transactions.length, transactionsInLastMinute);
+
+    // Se houver mais de 5 transações, marca o cartão como suspeito
+    if (transactionsInLastMinute >= 5) {
+      console.log('Cartão suspeito detectado:', card_number);
+      await this.transactionsRepository.flagCardAsSuspicious(card_number);
+    }
   }
 }
