@@ -76,7 +76,7 @@ export class Transaction extends BaseEntity<TransactionProps> {
   }
 
   static create(props: Optional<TransactionProps, 'status' | 'createdAt'>, id?: ID) {
-    // Validate input data
+    // First validate input data
     this.validate(props);
 
     return new Transaction(
@@ -94,7 +94,7 @@ export class Transaction extends BaseEntity<TransactionProps> {
       throw new Error('Amount must be greater than zero');
     }
 
-    if (props.amount > 10_000) {
+    if (props.amount > 10_000 /* HARDCODED */) {
       props.status = PAYMENT_STATUS.HIGH_AMOUNT;
     }
 

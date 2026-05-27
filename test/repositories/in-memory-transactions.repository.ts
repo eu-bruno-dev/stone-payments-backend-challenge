@@ -11,7 +11,7 @@ export class InMemoryTransactionsRepository implements TransactionsRepository {
 
   public blacklistedCards = new Set<string>();
 
-  async makeTransaction(transaction: Transaction): Promise<Transaction | null> {
+  async save(transaction: Transaction): Promise<Transaction | null> {
     // Salva no índice secundário (busca por cartão)
     const cardNumber = transaction.card_number.value;
 

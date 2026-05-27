@@ -58,6 +58,12 @@ export class MakeTransactionUseCase {
     const authorize_transaction = await this.authorizer.authorize(transaction);
 
     if (!authorize_transaction) {
+      transaction.changeStatus(PAYMENT_STATUS.REJECTED);
+      const rejectedTransaction = await this.transactionsRepository.save(transaction);
+
+      if (!rejectedTransaction) {
+        throw new Error('Error saving rejected transaction');
+      }
       throw new Error('rejected');
     }
     // Set the authorizer_id
@@ -77,7 +83,7 @@ export class MakeTransactionUseCase {
       transaction.changeStatus(PAYMENT_STATUS.APPROVED);
     }
 
-    const newTransaction = await this.transactionsRepository.makeTransaction(transaction);
+    const newTransaction = await this.transactionsRepository.save(transaction);
 
     if (!newTransaction) {
       throw new Error('Error on transaction, aborting...');

@@ -83,7 +83,7 @@ suite('[MakeTransaction][UseCase]', () => {
       expect(result.transaction.updated_at).toBeDefined();
     });
 
-    it('should be able to create transactions that is marked as suspicious', async () => {
+    it('should be able to create a transaction that is marked as suspicious', async () => {
       const card_number = '4111111111111111';
 
       const transactions: Transaction[] = [];
@@ -125,6 +125,9 @@ suite('[MakeTransaction][UseCase]', () => {
       expect(result.transaction.status).toEqual(PAYMENT_STATUS.APPROVED_WITH_WARNING);
       expect(result.transaction.warning).toEqual(WARNING_MESSAGES.SUSPICIOUS_CARD);
       expect(transactionsRepository.blacklistedCards.has(card_number)).toBe(true);
+      expect(transactionsRepository.items.get(result.transaction.id.toString())?.status).toEqual(
+        PAYMENT_STATUS.APPROVED_WITH_WARNING,
+      );
     });
 
     it('should not be able to create a transaction with invalid card number format', async () => {
@@ -182,6 +185,28 @@ suite('[MakeTransaction][UseCase]', () => {
           timestamp: new Date(Date.now() + 1000 * 60 * 60),
         }),
       ).rejects.toThrow(TRANSACTION_ERROR_MESSAGES.TIMESTAMP_ON_FUTURE);
+    });
+
+    it('should be able to save a transaction as rejected if the authorizer rejects it', async () => {
+      const transaction = makeTransaction({});
+      authorizer.isAuthorized = false;
+
+      await expect(
+        sut.execute({
+          id: transaction.id,
+          amount: transaction.amount,
+          card_number: transaction.card_number.value,
+          currency: transaction.currency,
+          merchant: transaction.merchant,
+          timestamp: transaction.timestamp,
+        }),
+      ).rejects.toThrow('rejected');
+      // console.log(transactionsRepository.items.entries());
+      const savedTransaction = transactionsRepository.items.get(transaction.id.toString());
+      // console.log(savedTransaction);
+      expect(savedTransaction).toBeDefined();
+      assert(savedTransaction);
+      expect(savedTransaction.status).toEqual(PAYMENT_STATUS.REJECTED);
     });
   });
 });

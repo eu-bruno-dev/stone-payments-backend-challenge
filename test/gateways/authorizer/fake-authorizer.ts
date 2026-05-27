@@ -5,7 +5,7 @@ import { randomUUID } from 'node:crypto';
 export class FakeAuthorizer implements Authorizer {
   public isAuthorized = true;
 
-  async authorize(transaction: Transaction): Promise<{ authorize_id: string }> {
+  async authorize(transaction: Transaction): Promise<{ authorize_id: string } | null> {
     console.log(`Amount of ${transaction.amount} to authorize.`);
 
     // Simulate fetch call
@@ -15,7 +15,7 @@ export class FakeAuthorizer implements Authorizer {
     if (!this.isAuthorized) {
       console.log('Transaction NOT AUTHORIZED');
       this.isAuthorized = false;
-      throw new Error('invalid payload');
+      return null;
     }
     console.log('Transaction AUTHORIZED');
 
