@@ -92,14 +92,14 @@ export class MakeTransactionUseCase {
     return { transaction: newTransaction };
   }
 
-  private validatePayload(payload: MakeTransactionUseCaseRequest) {
+  private validatePayload(payload: MakeTransactionUseCaseRequest): void {
     const { card_number, amount, currency, merchant, timestamp } = payload;
 
     if (amount <= 0) {
-      throw new Error('Amount must be greater than zero');
+      throw new Error(TRANSACTION_ERROR_MESSAGES.INVALID_AMOUNT_ERROR);
     }
     if (!card_number || !currency || !merchant || !timestamp) {
-      throw new Error('Missing required fields in payload');
+      throw new Error(TRANSACTION_ERROR_MESSAGES.MISSING_REQUIRED_PAYLOAD_FIELDS_ERROR);
     }
 
     if (payload.timestamp.getTime() > Date.now()) {
@@ -128,7 +128,7 @@ export class MakeTransactionUseCase {
 
     // Se houver mais de 5 transações, marca o cartão como suspeito
     if (transactionsInLastMinute >= 5) {
-      console.log('Cartão suspeito detectado:', card_number);
+      // console.log('Cartão suspeito detectado:', card_number);
       await this.transactionsRepository.flagCardAsSuspicious(card_number);
     }
   }

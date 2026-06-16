@@ -17,7 +17,7 @@ export function makeTransaction(props: MakeTransactionProps = {}, id?: ID) {
       card_number: CreditCard.createCreditCard(
         props.card_number ?? faker.finance.creditCardNumber(),
       ),
-      amount: props.amount ?? faker.number.float({ fractionDigits: 2, min: 0, max: 3000 }),
+      amount: props.amount ?? faker.number.float({ fractionDigits: 2, min: 1, max: 3000 }),
       currency: props.currency ?? CURRENCY_OPTIONS.BRL,
       merchant: props.merchant ?? faker.company.name(),
       timestamp: Timestamp.createTimestamp(props.timestamp ?? new Date()),

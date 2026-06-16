@@ -14,6 +14,7 @@ export const envSchema = z.object({
   NODE_ENV: z.enum(['dev', 'prod', 'test']).default('dev'),
   APP_PORT: z.coerce.number().default(3333),
   BASE_URL: z.url(),
+  WORKER_COUNT: z.coerce.number().default(4),
   // DATABASE_URL: z.url().startsWith('postgres://'),
 });
 

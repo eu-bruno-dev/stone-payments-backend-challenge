@@ -142,7 +142,7 @@ suite('[MakeTransaction][UseCase]', () => {
           merchant: transaction.merchant,
           timestamp: transaction.timestamp,
         }),
-      ).rejects.toThrow('card_number must be between 13 and 19 digits');
+      ).rejects.toThrow(TRANSACTION_ERROR_MESSAGES.CARD_NUMBER_ERROR);
     });
 
     it('should not be able to create a transaction with amount less than or equal to zero', async () => {
@@ -156,10 +156,10 @@ suite('[MakeTransaction][UseCase]', () => {
           merchant: transaction.merchant,
           timestamp: transaction.timestamp,
         }),
-      ).rejects.toThrow('Amount must be greater than zero');
+      ).rejects.toThrow(TRANSACTION_ERROR_MESSAGES.INVALID_AMOUNT_ERROR);
     });
 
-    it('should no be able to create a transaction with timestamp in the future', async () => {
+    it('should not be able to create a transaction with timestamp in the future', async () => {
       const transaction = makeTransaction({});
       await expect(
         sut.execute({
@@ -173,7 +173,7 @@ suite('[MakeTransaction][UseCase]', () => {
       ).rejects.toThrow(TRANSACTION_ERROR_MESSAGES.TIMESTAMP_NOT_VALID);
     });
 
-    it('should no be able to create a transaction with timestamp in the future', async () => {
+    it('should not be able to create a transaction with timestamp in the future', async () => {
       const transaction = makeTransaction({});
       await expect(
         sut.execute({
@@ -182,7 +182,7 @@ suite('[MakeTransaction][UseCase]', () => {
           card_number: transaction.card_number.value,
           currency: transaction.currency,
           merchant: transaction.merchant,
-          timestamp: new Date(Date.now() + 1000 * 60 * 60),
+          timestamp: new Date(Date.now() + 1000 * 60 * 60 /* 1h */),
         }),
       ).rejects.toThrow(TRANSACTION_ERROR_MESSAGES.TIMESTAMP_ON_FUTURE);
     });
