@@ -1,5 +1,8 @@
 import { DynamicModule, Module, Type } from '@nestjs/common';
-import { WorkerGateway } from '@/domain/application/shared/gateways/worker.gateway';
+import {
+  WorkerGateway,
+  WorkerPool as WorkerPoolContract,
+} from '@/domain/application/shared/gateways/worker.gateway';
 import { WorkerPool } from '@/infra/shared/workers/worker-pool';
 import { EnvModule } from '../env/env.module';
 
@@ -28,8 +31,12 @@ export class ConfigurableWorkerModule {
           useClass: options.workerGatewayProvider,
         },
         WorkerPool,
+        {
+          provide: WorkerPoolContract,
+          useExisting: WorkerPool,
+        },
       ],
-      exports: [WorkerPool, WorkerGateway],
+      exports: [WorkerPool, WorkerGateway, WorkerPoolContract],
     };
   }
 }

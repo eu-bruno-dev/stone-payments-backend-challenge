@@ -1,8 +1,12 @@
 import { Module } from '@nestjs/common';
 import { WorkerPool } from './worker-pool';
 import { RealWorkerGateway } from './real-worker.gateway';
-import { WorkerGateway } from '@/domain/application/shared/gateways/worker.gateway';
+import {
+  WorkerGateway,
+  WorkerPool as WorkerPoolContract,
+} from '@/domain/application/shared/gateways/worker.gateway';
 import { EnvModule } from '../env/env.module';
+import { TransactionModule } from '@/infra/modules/Transaction/transaction.module';
 
 /**
  * WorkerModule - Módulo responsável pela orquestração de workers
@@ -10,14 +14,18 @@ import { EnvModule } from '../env/env.module';
  * Integra o RealWorkerGateway para processamento de transações
  */
 @Module({
-  imports: [EnvModule],
+  imports: [EnvModule, TransactionModule],
   providers: [
     {
       provide: WorkerGateway,
       useClass: RealWorkerGateway,
     },
     WorkerPool,
+    {
+      provide: WorkerPoolContract,
+      useExisting: WorkerPool,
+    },
   ],
-  exports: [WorkerPool, WorkerGateway],
+  exports: [WorkerPool, WorkerGateway, WorkerPoolContract],
 })
 export class WorkerModule {}

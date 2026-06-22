@@ -5,7 +5,7 @@ import { Transaction } from '@/domain/enterprise/entities/transaction';
 export class InMemoryTransactionsRepository implements TransactionsRepository {
   public items = new Map<string, Transaction>();
 
-  // 2. Seu novo índice secundário (Indexado por Número do Cartão)
+  // 2. Novo índice secundário (Indexado por Número do Cartão)
   // Guardamos um array de transações para cada cartão
   private indexByCardNumber = new Map<string, Transaction[]>();
 

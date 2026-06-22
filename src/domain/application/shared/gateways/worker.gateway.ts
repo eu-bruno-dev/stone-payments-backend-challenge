@@ -18,3 +18,13 @@ export interface WorkerResult {
 export abstract class WorkerGateway {
   abstract process(task: WorkerTask): Promise<WorkerResult>;
 }
+
+/**
+ * WorkerPool - Define o contrato para enfileirar tarefas e consultar o estado do pool
+ * Esta abstração deve ser implementada pela camada de infra.
+ */
+export abstract class WorkerPool {
+  abstract enqueue(task: WorkerTask): Promise<WorkerResult>;
+  abstract getQueueSize(): number;
+  abstract getActiveWorkers(): number;
+}

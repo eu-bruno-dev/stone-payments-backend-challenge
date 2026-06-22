@@ -1,6 +1,7 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import {
   WorkerGateway,
+  WorkerPool as WorkerPoolContract,
   WorkerTask,
   WorkerResult,
 } from '@/domain/application/shared/gateways/worker.gateway';
@@ -21,7 +22,7 @@ import { prefixedLogger } from '@/infra/helpers/prefixed-logger';
  * - Dependency Inversion: depende de WorkerGateway abstrato
  */
 @Injectable()
-export class WorkerPool implements OnModuleInit, OnModuleDestroy {
+export class WorkerPool implements WorkerPoolContract, OnModuleInit, OnModuleDestroy {
   private readonly logger = prefixedLogger(WorkerPool.name);
   private taskQueue: WorkerTask[] = [];
   private activeWorkers = 0;

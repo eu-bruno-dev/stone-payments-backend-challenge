@@ -46,6 +46,7 @@ suite('[MakeTransaction][UseCase]', () => {
       expect(result.transaction).toBeDefined();
       expect(transactionsRepository.items).toHaveLength(1);
       expect(result.transaction.id.toString()).toBe(transaction.id.toString());
+      expect(result.transaction.merchant).toEqual('Amazon');
       expect(result.transaction.authorize_id).toBeDefined();
       expect(transactionsRepository.items.get(transactionID)?.amount).toBe(transaction.amount);
       expect(result.transaction.status).toEqual(PAYMENT_STATUS.APPROVED);
@@ -75,6 +76,7 @@ suite('[MakeTransaction][UseCase]', () => {
 
       expect(result.transaction).toBeDefined();
       expect(transactionsRepository.items).toHaveLength(1);
+      expect(result.transaction.merchant).toEqual('Amazon');
       expect(result.transaction.id.toString()).toBe(transaction.id.toString());
       expect(result.transaction.authorize_id).toBeDefined();
       expect(transactionsRepository.items.get(transactionID)?.amount).toBe(transaction.amount);
@@ -159,7 +161,7 @@ suite('[MakeTransaction][UseCase]', () => {
       ).rejects.toThrow(TRANSACTION_ERROR_MESSAGES.INVALID_AMOUNT_ERROR);
     });
 
-    it('should not be able to create a transaction with timestamp in the future', async () => {
+    it('should not be able to create a transaction with invalid timestamp', async () => {
       const transaction = makeTransaction({});
       await expect(
         sut.execute({

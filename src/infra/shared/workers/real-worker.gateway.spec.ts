@@ -5,6 +5,9 @@ import { InMemoryTransactionsRepository } from 'test/repositories/in-memory-tran
 import { makeTransaction } from 'test/factories/make-transaction';
 import { PAYMENT_STATUS } from '@/core/consts/payment-status';
 import { TransactionsRepository } from '@/domain/application/transaction/repositories/transactions.repository';
+import { MakeTransactionUseCase } from '@/domain/application/transaction/use-cases/make-transaction-use-case';
+import { TransactionDomainService } from '@/domain/application/transaction/transaction.domain-service';
+import { WorkerPool } from '@/domain/application/shared/gateways/worker.gateway';
 
 /**
  * Testes para o RealWorkerGateway
@@ -14,11 +17,28 @@ describe('RealWorkerGateway', () => {
   let realWorker: RealWorkerGateway;
   let fakeAuthorizer: FakeAuthorizer;
   let inMemoryRepository: InMemoryTransactionsRepository;
+  let transactionDomainService: TransactionDomainService;
 
   beforeEach(() => {
     fakeAuthorizer = new FakeAuthorizer();
     inMemoryRepository = new InMemoryTransactionsRepository();
-    realWorker = new RealWorkerGateway(fakeAuthorizer, inMemoryRepository);
+    // Minimal fake workerPool implementation for tests
+    const fakeWorkerPool: WorkerPool = {
+      // eslint-disable-next-line @typescript-eslint/require-await
+      enqueue: async () => ({ success: true }),
+      getQueueSize: () => 0,
+      getActiveWorkers: () => 0,
+    };
+
+    const makeTransactionUseCase = new MakeTransactionUseCase(inMemoryRepository, fakeAuthorizer);
+    transactionDomainService = new TransactionDomainService(
+      makeTransactionUseCase,
+      fakeWorkerPool,
+      fakeAuthorizer,
+      inMemoryRepository,
+    );
+
+    realWorker = new RealWorkerGateway(transactionDomainService);
   });
 
   it('should process a transaction successfully', async () => {
@@ -105,10 +125,14 @@ describe('RealWorkerGateway', () => {
     // Simula erro forçando um cenário de falha
     // Por exemplo, removendo o repositório temporariamente
 
-    const brokenWorker = new RealWorkerGateway(
+    const brokenTransactionDomainService = new TransactionDomainService(
+      new MakeTransactionUseCase(null as unknown as TransactionsRepository, fakeAuthorizer),
+      null as unknown as any,
       fakeAuthorizer,
       null as unknown as TransactionsRepository,
     );
+
+    const brokenWorker = new RealWorkerGateway(brokenTransactionDomainService);
 
     const transaction = makeTransaction({});
     const task = {

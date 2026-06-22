@@ -9,7 +9,7 @@ import { Authorizer } from '../../shared/gateways/authorizer.gateway';
 import { PAYMENT_STATUS } from '@/core/consts/payment-status';
 import { WARNING_MESSAGES } from '@/core/consts/warning';
 
-interface MakeTransactionUseCaseRequest {
+export interface MakeTransactionUseCaseRequest {
   id?: ID;
   card_number: string;
   amount: number;

@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { FakeWorkerGateway } from 'test/gateways/workers/fake-worker.gateway';
 import { makeTransaction } from 'test/factories/make-transaction';
+import { WorkerTask } from '@/domain/application/shared/gateways/worker.gateway';
 
 /**
  * Testes para o FakeWorkerGateway
@@ -15,7 +16,7 @@ describe('FakeWorkerGateway', () => {
 
   it('should process a task successfully', async () => {
     const transaction = makeTransaction({});
-    const task = {
+    const task: WorkerTask = {
       transaction,
       retries: 0,
     };
@@ -32,7 +33,7 @@ describe('FakeWorkerGateway', () => {
     fakeWorker.failureMessage = 'Custom failure';
 
     const transaction = makeTransaction({});
-    const task = {
+    const task: WorkerTask = {
       transaction,
       retries: 0,
     };
@@ -48,7 +49,7 @@ describe('FakeWorkerGateway', () => {
     fakeWorker.processDelay = 100;
 
     const transaction = makeTransaction({});
-    const task = {
+    const task: WorkerTask = {
       transaction,
       retries: 0,
     };
@@ -63,7 +64,7 @@ describe('FakeWorkerGateway', () => {
 
   it('should return transaction id in result data', async () => {
     const transaction = makeTransaction({});
-    const task = {
+    const task: WorkerTask = {
       transaction,
       retries: 0,
     };
